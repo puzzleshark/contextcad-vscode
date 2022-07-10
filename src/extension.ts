@@ -16,8 +16,21 @@ export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('contextcad-vscode.helloWorld', () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
-		// vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
+		vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
 	});
+
+	vscode.debug.onDidReceiveDebugSessionCustomEvent(event => {
+		vscode.window.showInformationMessage("we are here!");
+		// vscode.debug.activeDebugSession?.customRequest("hi");
+		console.log(event);
+		if(event.event === 'stopped') {
+			vscode.window.showInformationMessage("we are stopped!");
+		}
+		if(event.event === "exited") {
+			vscode.window.showInformationMessage("we are exiting");
+		}
+	});
+
 
 	vscode.extensions.getExtension("ms-python.python")?.activate().then((val) => {
 		
