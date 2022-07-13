@@ -17,6 +17,25 @@ export function activate(context: vscode.ExtensionContext) {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
+
+		vscode.debug.registerDebugAdapterTrackerFactory('python', {
+			createDebugAdapterTracker(session: vscode.DebugSession) {
+				return {
+					onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
+					onDidSendMessage: m => {
+						console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
+						if (m.event === "stopped" && m.body.reason === "breakpoint") {
+							session.customRequest("evaluate", {"expression": "5 + 5"}).then(reply => {
+								vscode.window.showInformationMessage(`result: ${reply.result}`);
+							}, error => {
+								vscode.window.showInformationMessage(`error: ${error.message}`);
+							});
+						}
+					}
+				};
+			}
+		  }
+		);
 	});
 
 	// vscode.debug.onDidStartDebugSession((d: vscode.DebugSession) => {
@@ -57,27 +76,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// 	"type": "request",
 	// 	"seq": 26
 	//   }
-
-	vscode.debug.registerDebugAdapterTrackerFactory('python', {
-		createDebugAdapterTracker(session: vscode.DebugSession) {
-		  return {
-			onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
-			onDidSendMessage: m => {
-				console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
-				if (m.event === "stopped" && m.body.reason === "breakpoint") {
-					console.log("WE ARE HERE");
-					session.customRequest("evaluate", {
-						"expression": "5 + 5",
-						// "frameId": 1,
-						"context": "dap"
-					});
-					// console.log(out);
-				}
-			}
-		  };
-		}
-	  }
-	);
 
 
 	// did < {
