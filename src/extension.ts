@@ -47,6 +47,17 @@ export function activate(context: vscode.ExtensionContext) {
 	// 	vscode.window.showInformationMessage("in change");
 	// });
 
+	// will > {
+	// 	"command": "evaluate",
+	// 	"arguments": {
+	// 	  "expression": "2 + 3",
+	// 	  "frameId": 2,
+	// 	  "context": "repl"
+	// 	},
+	// 	"type": "request",
+	// 	"seq": 26
+	//   }
+
 	vscode.debug.registerDebugAdapterTrackerFactory('python', {
 		createDebugAdapterTracker(session: vscode.DebugSession) {
 		  return {
@@ -55,6 +66,12 @@ export function activate(context: vscode.ExtensionContext) {
 				console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
 				if (m.event === "stopped" && m.body.reason === "breakpoint") {
 					console.log("WE ARE HERE");
+					session.customRequest("evaluate", {
+						"expression": "5 + 5",
+						// "frameId": 1,
+						"context": "dap"
+					});
+					// console.log(out);
 				}
 			}
 		  };
