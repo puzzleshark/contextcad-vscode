@@ -19,9 +19,17 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
 	});
 
+	vscode.debug.onDidStartDebugSession((d: vscode.DebugSession) => {
+		console.log(d);
+		vscode.window.showInformationMessage("we are starting a debug session");
+	});
+
+	vscode.tasks.onDidStartTaskProcess((e) => {vscode.window.showInformationMessage("this is progress");});
+	vscode.tasks.onDidEndTask((e) => {vscode.window.showInformationMessage("another test");});
+
 	vscode.debug.onDidReceiveDebugSessionCustomEvent(event => {
 		vscode.window.showInformationMessage("we are here!");
-		// vscode.debug.activeDebugSession?.customRequest("hi");
+		// v = vscode.debug.activeDebugSession?.customRequest("evaluate", {"expression": "print(a)"});
 		console.log(event);
 		if(event.event === 'stopped') {
 			vscode.window.showInformationMessage("we are stopped!");
@@ -30,6 +38,16 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showInformationMessage("we are exiting");
 		}
 	});
+
+	vscode.tasks.onDidStartTask((e) => {
+		vscode.window.showInformationMessage("ok this is cool!");
+	});
+
+	vscode.debug.onDidChangeActiveDebugSession(event => {
+		vscode.window.showInformationMessage("in change");
+	});
+
+
 
 
 	vscode.extensions.getExtension("ms-python.python")?.activate().then((val) => {
