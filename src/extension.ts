@@ -19,42 +19,67 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
 	});
 
-	vscode.debug.onDidStartDebugSession((d: vscode.DebugSession) => {
-		console.log(d);
-		vscode.window.showInformationMessage("we are starting a debug session");
-	});
+	// vscode.debug.onDidStartDebugSession((d: vscode.DebugSession) => {
+	// 	console.log(d);
+	// 	vscode.window.showInformationMessage("we are starting a debug session");
+	// });
 
-	vscode.tasks.onDidStartTaskProcess((e) => {vscode.window.showInformationMessage("this is progress");});
-	vscode.tasks.onDidEndTask((e) => {vscode.window.showInformationMessage("another test");});
+	// vscode.tasks.onDidStartTaskProcess((e) => {vscode.window.showInformationMessage("this is progress");});
+	// vscode.tasks.onDidEndTask((e) => {vscode.window.showInformationMessage("another test");});
 
-	vscode.debug.onDidReceiveDebugSessionCustomEvent(event => {
-		vscode.window.showInformationMessage("we are here!");
-		// v = vscode.debug.activeDebugSession?.customRequest("evaluate", {"expression": "print(a)"});
-		console.log(event);
-		if(event.event === 'stopped') {
-			vscode.window.showInformationMessage("we are stopped!");
+	// vscode.debug.onDidReceiveDebugSessionCustomEvent(event => {
+	// 	vscode.window.showInformationMessage("we are here!");
+	// 	// v = vscode.debug.activeDebugSession?.customRequest("evaluate", {"expression": "print(a)"});
+	// 	console.log(event);
+	// 	if(event.event === 'stopped') {
+	// 		vscode.window.showInformationMessage("we are stopped!");
+	// 	}
+	// 	if(event.event === "exited") {
+	// 		vscode.window.showInformationMessage("we are exiting");
+	// 	}
+	// });
+
+	// vscode.tasks.onDidStartTask((e) => {
+	// 	vscode.window.showInformationMessage("ok this is cool!");
+	// });
+
+	// vscode.debug.onDidChangeActiveDebugSession(event => {
+	// 	vscode.window.showInformationMessage("in change");
+	// });
+
+	vscode.debug.registerDebugAdapterTrackerFactory('python', {
+		createDebugAdapterTracker(session: vscode.DebugSession) {
+		  return {
+			onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
+			onDidSendMessage: m => {
+				console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
+				if (m.event === "stopped" && m.body.reason === "breakpoint") {
+					console.log("WE ARE HERE");
+				}
+			}
+		  };
 		}
-		if(event.event === "exited") {
-			vscode.window.showInformationMessage("we are exiting");
-		}
-	});
-
-	vscode.tasks.onDidStartTask((e) => {
-		vscode.window.showInformationMessage("ok this is cool!");
-	});
-
-	vscode.debug.onDidChangeActiveDebugSession(event => {
-		vscode.window.showInformationMessage("in change");
-	});
+	  }
+	);
 
 
+	// did < {
+	// 	"seq": 13,
+	// 	"type": "event",
+	// 	"event": "stopped",
+	// 	"body": {
+	// 	  "reason": "breakpoint",
+	// 	  "threadId": 1,
+	// 	  "preserveFocusHint": false,
+	// 	  "allThreadsStopped": true
+	// 	}
+	//   }
 
 
-	vscode.extensions.getExtension("ms-python.python")?.activate().then((val) => {
-		
-		// vscode.extensions.getExtension("ms-python.python")?.exports
-		vscode.window.showInformationMessage('ok ok!');
-	});
+	// vscode.extensions.getExtension("ms-python.python")?.activate().then((val) => {
+	// 	// vscode.extensions.getExtension("ms-python.python")?.exports
+	// 	vscode.window.showInformationMessage('ok ok!');
+	// });
 
 	context.subscriptions.push(disposable);
 }
