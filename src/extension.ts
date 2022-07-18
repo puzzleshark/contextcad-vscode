@@ -7,20 +7,64 @@ import * as fs from 'fs';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	let panel = undefined;
-	const modules_path = path.join(context.extensionPath, 'node_modules');
-	const three_cad_viewer_path = path.join(modules_path, 'three-cad-viewer', 'dist');
-	const static_path = path.join(context.extensionPath, 'static');
-	const stubs_path = path.join(context.extensionPath, 'stubs');
-	const viewer_options = {
+	let panel: vscode.WebviewPanel | undefined = undefined;
+	const modulesPath = path.join(context.extensionPath, 'node_modules');
+	const threeCadViewerPath = path.join(modulesPath, 'three-cad-viewer', 'dist');
+	const staticPath = path.join(context.extensionPath, 'static');
+	const viewerOptions = {
 		theme: 'browser',
 		glass: true,
 		control: 'trackball'			
+	}
+
+	function init() {
+		if (panel) {
+			panel.reveal(vscode.ViewColumn.Two);
+		} else {
+			panel = vscode.window.createWebviewPanel(
+				'cadQuery', 'CadQuery view', vscode.ViewColumn.Two, {
+					enableScripts: true,
+					localResourceRoots: [
+						vscode.Uri.file(threeCadViewerPath),
+						vscode.Uri.file(staticPath)
+					]
+				}
+			);
+
+			const cqViewerPath = path.join(staticPath, 'cq-viewer.html');
+			let html = fs.readFileSync(vscode.Uri.file(cqViewerPath).fsPath).toString();
+
+			const cssPath = path.join(threeCadViewerPath, 'three-cad-viewer.esm.min.css');
+			html = html.replace('{{cq-view-css}}', getResourceUri(panel.webview, cssPath));
+
+			const jsPath = path.join(threeCadViewerPath, 'three-cad-viewer.esm.min.js');
+			html = html.replace('{{cq-view-js}}', getResourceUri(panel.webview, jsPath));
+
+			panel.webview.html = html;
+			vscode.commands.executeCommand('cadquery.render');
+
+			// panel.webview.onDidReceiveMessage(
+			// 	message => {
+			// 		if (message.status === 'dom_loaded') {
+			// 			render()
+			// 		}
+			// 	},
+			// 	undefined,
+			// 	context.subscriptions
+			// );
+
+			panel.onDidDispose(() => {
+				panel = undefined;
+				deactivate();
+			}, null, context.subscriptions);
+		}
 	}
 	
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "contextcad-vscode" is now active!');
+
+	context.subscriptions.push(vscode.commands.registerCommand('contextcad-vscode.init', init));
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -30,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
 
-		vscode.debug.registerDebugAdapterTrackerFactory('*', {
+		vscode.debug.registerDebugAdapterTrackerFactory('python', {
 			createDebugAdapterTracker(session: vscode.DebugSession) {
 				return {
 					onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
@@ -51,79 +95,13 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		  }
 		);
-		// const s = vscode.debug.activeDebugSession;
-		// if (s !== undefined) {
-		// 	s.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
-		// 		const frameId = sTrace.stackFrames[0].id; 
-		// 		// vscode.window.showInformationMessage(`frameId ${frameId}`);
-		// 	});
-		// 	s.customRequest("evaluate", {expression: "5 + 5", frameId: 2, context: "hover"}).then(reply => {
-		// 		vscode.window.showInformationMessage(`result: ${reply.result}`);
-		// 	}, error => {
-		// 		vscode.window.showInformationMessage(`error: ${error.message}`);
-		// 	});
-		// }
 	});
 
-	// vscode.debug.onDidStartDebugSession((d: vscode.DebugSession) => {
-	// 	console.log(d);
-	// 	vscode.window.showInformationMessage("we are starting a debug session");
-	// });
-
-	// vscode.tasks.onDidStartTaskProcess((e) => {vscode.window.showInformationMessage("this is progress");});
-	// vscode.tasks.onDidEndTask((e) => {vscode.window.showInformationMessage("another test");});
-
-	// vscode.debug.onDidReceiveDebugSessionCustomEvent(event => {
-	// 	vscode.window.showInformationMessage("we are here!");
-	// 	// v = vscode.debug.activeDebugSession?.customRequest("evaluate", {"expression": "print(a)"});
-	// 	console.log(event);
-	// 	if(event.event === 'stopped') {
-	// 		vscode.window.showInformationMessage("we are stopped!");
-	// 	}
-	// 	if(event.event === "exited") {
-	// 		vscode.window.showInformationMessage("we are exiting");
-	// 	}
-	// });
-
-	// vscode.tasks.onDidStartTask((e) => {
-	// 	vscode.window.showInformationMessage("ok this is cool!");
-	// });
-
-	// vscode.debug.onDidChangeActiveDebugSession(event => {
-	// 	vscode.window.showInformationMessage("in change");
-	// });
-
-	// will > {
-	// 	"command": "evaluate",
-	// 	"arguments": {
-	// 	  "expression": "2 + 3",
-	// 	  "frameId": 2,
-	// 	  "context": "repl"
-	// 	},
-	// 	"type": "request",
-	// 	"seq": 26
-	//   }
-
-
-	// did < {
-	// 	"seq": 13,
-	// 	"type": "event",
-	// 	"event": "stopped",
-	// 	"body": {
-	// 	  "reason": "breakpoint",
-	// 	  "threadId": 1,
-	// 	  "preserveFocusHint": false,
-	// 	  "allThreadsStopped": true
-	// 	}
-	// }
-
-
-	// vscode.extensions.getExtension("ms-python.python")?.activate().then((val) => {
-	// 	// vscode.extensions.getExtension("ms-python.python")?.exports
-	// 	vscode.window.showInformationMessage('ok ok!');
-	// });
-
 	context.subscriptions.push(disposable);
+}
+
+function getResourceUri(webview: vscode.Webview, resoucePath: string) {
+	return webview.asWebviewUri(vscode.Uri.file(resoucePath)).toString();
 }
 
 // this method is called when your extension is deactivated

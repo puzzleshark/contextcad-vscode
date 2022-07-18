@@ -22,6 +22,10 @@
 			{
 				"command": "contextcad-vscode.helloWorld",
 				"title": "Hello World"
+			},
+			{
+				"command": "contextcad-vscode.init",
+				"title": "Init ContextCad"
 			}
 		]
 	},
