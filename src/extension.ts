@@ -1,10 +1,22 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as  path from 'path';
+import * as fs from 'fs';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	let panel = undefined;
+	const modules_path = path.join(context.extensionPath, 'node_modules');
+	const three_cad_viewer_path = path.join(modules_path, 'three-cad-viewer', 'dist');
+	const static_path = path.join(context.extensionPath, 'static');
+	const stubs_path = path.join(context.extensionPath, 'stubs');
+	const viewer_options = {
+		theme: 'browser',
+		glass: true,
+		control: 'trackball'			
+	}
 	
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -18,17 +30,20 @@ export function activate(context: vscode.ExtensionContext) {
 		// Display a message box to the user
 		vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
 
-		vscode.debug.registerDebugAdapterTrackerFactory('python', {
+		vscode.debug.registerDebugAdapterTrackerFactory('*', {
 			createDebugAdapterTracker(session: vscode.DebugSession) {
 				return {
 					onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
 					onDidSendMessage: m => {
 						console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
 						if (m.event === "stopped" && m.body.reason === "breakpoint") {
-							session.customRequest("evaluate", {"expression": "5 + 5", context: 'repl'}).then(reply => {
-								vscode.window.showInformationMessage(`result: ${reply.result}`);
-							}, error => {
-								vscode.window.showInformationMessage(`error: ${error.message}`);
+							session.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
+								const frameId = sTrace.stackFrames[0].id;
+								session.customRequest("evaluate", {"expression": "5 + 5", frameId: frameId, context: 'hover'}).then(reply => {
+									vscode.window.showInformationMessage(`result: ${reply.result}`);
+								}, error => {
+									vscode.window.showInformationMessage(`error: ${error.message}`);
+								});
 							});
 						}
 					}
@@ -36,6 +51,18 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		  }
 		);
+		// const s = vscode.debug.activeDebugSession;
+		// if (s !== undefined) {
+		// 	s.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
+		// 		const frameId = sTrace.stackFrames[0].id; 
+		// 		// vscode.window.showInformationMessage(`frameId ${frameId}`);
+		// 	});
+		// 	s.customRequest("evaluate", {expression: "5 + 5", frameId: 2, context: "hover"}).then(reply => {
+		// 		vscode.window.showInformationMessage(`result: ${reply.result}`);
+		// 	}, error => {
+		// 		vscode.window.showInformationMessage(`error: ${error.message}`);
+		// 	});
+		// }
 	});
 
 	// vscode.debug.onDidStartDebugSession((d: vscode.DebugSession) => {
