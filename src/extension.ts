@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 					onDidSendMessage: m => {
 						console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
 						if (m.event === "stopped" && m.body.reason === "breakpoint") {
-							session.customRequest("evaluate", {"expression": "5 + 5"}).then(reply => {
+							session.customRequest("evaluate", {"expression": "5 + 5", context: 'repl'}).then(reply => {
 								vscode.window.showInformationMessage(`result: ${reply.result}`);
 							}, error => {
 								vscode.window.showInformationMessage(`error: ${error.message}`);
@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// 	  "preserveFocusHint": false,
 	// 	  "allThreadsStopped": true
 	// 	}
-	//   }
+	// }
 
 
 	// vscode.extensions.getExtension("ms-python.python")?.activate().then((val) => {
