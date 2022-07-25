@@ -43,15 +43,37 @@ export function activate(context: vscode.ExtensionContext) {
 			panel.webview.html = html;
 			vscode.commands.executeCommand('cadquery.render');
 
-			// panel.webview.onDidReceiveMessage(
-			// 	message => {
-			// 		if (message.status === 'dom_loaded') {
-			// 			render()
-			// 		}
-			// 	},
-			// 	undefined,
-			// 	context.subscriptions
-			// );
+			
+			vscode.debug.registerDebugAdapterTrackerFactory('python', {
+				createDebugAdapterTracker(session: vscode.DebugSession) {
+					return {
+						onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
+						onDidSendMessage: m => {
+							console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
+							if (m.event === "stopped" && m.body.reason === "breakpoint") {
+								session.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
+									const frameId = sTrace.stackFrames[0].id;
+									session.customRequest("evaluate", {"expression": "contextcad.context.Context.stack[-1]._get_description()", frameId: frameId, context: 'hover'}).then(reply => {
+										vscode.window.showInformationMessage(`result: ${reply.result}`);
+										let real = reply.result.replace("'", "")
+										let ok = JSON.parse(real.replace("'", ""))
+										if (panel) {
+											panel.webview.postMessage({
+												command: 'render',
+												model: ok,
+												options: viewerOptions
+											});
+										}
+									}, error => {
+										vscode.window.showInformationMessage(`error: ${error.message}`);
+									});
+								});
+							}
+						}
+					};
+				}
+			}
+		);
 
 			panel.onDidDispose(() => {
 				panel = undefined;
@@ -60,44 +82,21 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}
 	
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
+	// // Use the console to output diagnostic information (console.log) and errors (console.error)
+	// // This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "contextcad-vscode" is now active!');
 
 	context.subscriptions.push(vscode.commands.registerCommand('contextcad-vscode.init', init));
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('contextcad-vscode.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
+	// // The command has been defined in the package.json file
+	// // Now provide the implementation of the command with registerCommand
+	// // The commandId parameter must match the command field in package.json
+	// let disposable = vscode.commands.registerCommand('contextcad-vscode.helloWorld', () => {
+	// 	// The code you place here will be executed every time your command is executed
+	// 	// Display a message box to the user
+	// 	vscode.window.showInformationMessage('Hello World from contextcad-vscode!');
 
-		vscode.debug.registerDebugAdapterTrackerFactory('python', {
-			createDebugAdapterTracker(session: vscode.DebugSession) {
-				return {
-					onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
-					onDidSendMessage: m => {
-						console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
-						if (m.event === "stopped" && m.body.reason === "breakpoint") {
-							session.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
-								const frameId = sTrace.stackFrames[0].id;
-								session.customRequest("evaluate", {"expression": "5 + 5", frameId: frameId, context: 'hover'}).then(reply => {
-									vscode.window.showInformationMessage(`result: ${reply.result}`);
-								}, error => {
-									vscode.window.showInformationMessage(`error: ${error.message}`);
-								});
-							});
-						}
-					}
-				};
-			}
-		  }
-		);
-	});
-
-	context.subscriptions.push(disposable);
+	// context.subscriptions.push(disposable);
 }
 
 function getResourceUri(webview: vscode.Webview, resoucePath: string) {
