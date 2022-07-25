@@ -49,8 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 					return {
 						onWillReceiveMessage: m => console.log(`will > ${JSON.stringify(m, undefined, 2)}`),
 						onDidSendMessage: m => {
-							console.log(`did < ${JSON.stringify(m, undefined, 2)}`);
-							if (m.event === "stopped" && m.body.reason === "breakpoint") {
+							if (m.event === "stopped") {
 								session.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
 									const frameId = sTrace.stackFrames[0].id;
 									session.customRequest("evaluate", {"expression": "contextcad.context.Context.stack[-1]._get_description()", frameId: frameId, context: 'hover'}).then(reply => {
