@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 			html = html.replace('{{cq-view-js}}', getResourceUri(panel.webview, jsPath));
 
 			panel.webview.html = html;
-			vscode.commands.executeCommand('cadquery.render');
+			// vscode.commands.executeCommand('cadquery.render');
 
 			
 			vscode.debug.registerDebugAdapterTrackerFactory('python', {
