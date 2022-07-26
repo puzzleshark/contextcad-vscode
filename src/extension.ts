@@ -51,20 +51,21 @@ export function activate(context: vscode.ExtensionContext) {
 							if (m.event === "stopped") {
 								session.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
 									const frameId = sTrace.stackFrames[0].id;
-									session.customRequest("evaluate", {"expression": "contextcad.context.Context.stack[-1]._get_description()", frameId: frameId, context: 'hover'}).then(reply => {
-										vscode.window.showInformationMessage(`result: ${reply.result}`);
-										let model = JSON.parse(reply.result.replace("'", "").replace("'", ""))
-										if (panel) {
-											panel.webview.postMessage({
-												command: 'render',
-												model: model,
-												options: viewerOptions
-											});
-										}
+									return session.customRequest("evaluate", {"expression": "contextcad.context.Context.stack[-1]._get_description()", frameId: frameId, context: 'hover'})
+								}).then(reply => {
+									vscode.window.showInformationMessage(`result: ${reply.result}`);
+									let model = JSON.parse(reply.result.replace("'", "").replace("'", ""))
+									if (panel) {
+										panel.webview.postMessage({
+											command: 'render',
+											model: model,
+											options: viewerOptions
+										});
+									}
 									}, error => {
 										vscode.window.showInformationMessage(`error: ${error.message}`);
-									});
-								});
+									}
+								);
 							}
 						}
 					};
@@ -78,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}, null, context.subscriptions);
 		}
 	}
-	
+
 	console.log('Congratulations, your extension "contextcad-vscode" is now active!');
 
 	context.subscriptions.push(vscode.commands.registerCommand('contextcad-vscode.init', init));
