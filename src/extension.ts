@@ -51,7 +51,12 @@ export function activate(context: vscode.ExtensionContext) {
 							if (m.event === "stopped") {
 								session.customRequest('stackTrace', { threadId: 1 }).then(sTrace => {
 									const frameId = sTrace.stackFrames[0].id;
-									return session.customRequest("evaluate", {"expression": "contextcad.context.Context.stack[-1]._get_description()", frameId: frameId, context: 'hover'})
+									return session.customRequest(
+										"evaluate", {
+											"expression": "contextcad.context.Context.stack[-1]._get_description()",
+											frameId: frameId,
+											context: 'hover'
+										});
 								}).then(reply => {
 									vscode.window.showInformationMessage(`result: ${reply.result}`);
 									let model = JSON.parse(reply.result.replace("'", "").replace("'", ""))
